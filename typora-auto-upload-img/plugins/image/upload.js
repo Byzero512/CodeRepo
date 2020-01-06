@@ -101,20 +101,20 @@
             // 删除本地图片
             var fs = reqnode('fs');
             fs.unlinkSync(src.substring(7, src.lastIndexOf('?')));
-            console.log("upload succeed");
+            // console.log("upload succeed");
         },
         // 上传失败
         onFailure: function (text) {
             setting.element.attr("style", "background-color:#d51717;");
             setting.element.removeAttr(locked);
-            $('#' + noticeEle).
-                css({
-                    'background': 'rgba(255,0,0,0.7)'
-                }).
-                html(text).
-                show().
-                delay(10000).
-                fadeOut();
+            // $('#' + noticeEle).
+            // css({
+            //     'background': 'rgba(255,0,0,0.7)'
+            // }).
+            // html(text).
+            // show().
+            // delay(10000).
+            // fadeOut();
         }
     };
     
@@ -141,7 +141,7 @@
         // 根据base64获取文件扩展名
         extension: function(base64){
             var ext = base64.split(',')[0].match(/data:image\/(.*?);base64/)[1] || 'png';
-            console.log("the file ext is: "+ext);
+            // console.log("the file ext is: "+ext);
             return ext;
         },
         // 根据base64获取图片内容
@@ -152,7 +152,7 @@
         mine: function(base64){
             var arr  = base64.split(',');
             var mime = arr[0].match(/:(.*?);/)[1] || 'image/png';
-            console.log("the file mime is: "+mime);
+            // console.log("the file mime is: "+mime);
             return mime;
         },
         // 时间格式化函数
@@ -222,7 +222,7 @@
             xhr.onreadystatechange = function(e) {
                 if (xhr.readyState == 4) {
                     if (xhr.status == 200) {
-                        console.log(xhr.responseText);
+                        // console.log(xhr.responseText);
                         try{
                             var json = JSON.parse(xhr.responseText);
                             if(json.code){
@@ -232,11 +232,11 @@
                                 successCall(url);
                             }
                         }catch(err){
-                            console.log(err);
+                            // console.log(err);
                             return failureCall('服务响应解析失败，错误：'+err.message);
                         }
                     } else {
-                        console.log(xhr.responseText);
+                        // console.log(xhr.responseText);
                         var error = '网络错误，请重试。<br />'+xhr.responseText;
                         return failureCall(error);
                     }
@@ -279,8 +279,8 @@
                     lastPercent = info.percent;
                 }
             }, function (err, data) {
-                console.log(err);
-                console.log(data);
+                // console.log(err);
+                // console.log(data);
                 // 出现错误，打印错误信息
                 if(err){
                     return failureCall('服务返回异常，错误：'+err.error);
@@ -288,7 +288,7 @@
                 try{
                     successCall('https://'+data.Location);
                 }catch(err){
-                    console.log(err);
+                    // console.log(err);
                     // 出现非预期结果，打印错误
                     return failureCall('服务响应解析失败，错误：'+err.message);
                 }
@@ -320,11 +320,11 @@
                 contentType: false,
                 success: function(result) {
                     //奇葩的阿里云，响应内容为空
-                    console.log(result);
+                    // console.log(result);
                     successCall(setting.aliyun.BucketDomain+filepath);
                 },
                 error:function(result){
-                    console.log(result);
+                    // console.log(result);
                     failureCall('服务响应解析失败，请稍后再试');
                 }
             });
@@ -354,11 +354,11 @@
                     request.setRequestHeader("Authorization", authorization);
                 },
                 success: function(result) {
-                    console.log(result);
+                    // console.log(result);
                     //successCall(setting.aliyun.BucketDomain+filepath);
                 },
                 error:function(result){
-                    console.log(result);
+                    // console.log(result);
                     failureCall('服务响应解析失败，请稍后再试');
                 }
             });
@@ -387,11 +387,11 @@
                 data:formData,
                 contentType: false,
                 success: function(result) {
-                    console.log(result);
+                    // console.log(result);
                     successCall(setting.qiniu.AccessDomain+filepath);
                 },
                 error:function(result){
-                    console.log(result);
+                    // console.log(result);
                     failureCall('服务响应解析失败，请稍后再试');
                 }
             });
@@ -399,7 +399,7 @@
         
         // 使用github存储时，适用的上传方法
         github: function(fileData, successCall, failureCall){
-            console.log(setting.github);
+            // console.log(setting.github);
             var filename = helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
             var data = {
                 "message": "From:Thobian/typora-plugins-win-img",
@@ -420,16 +420,16 @@
                     request.setRequestHeader("Authorization", "token "+setting.github.Token);
                 },
                 success: function(data) {
-                    console.log(data);
+                    // console.log(data);
                     try{
                         successCall(data.content.download_url);
                     }catch(err){
-                        console.log(err);
+                        // console.log(err);
                         return failureCall('服务响应解析失败，请稍后再试');
                     }
                 },
                 error:function(result){
-                    console.log(result);
+                    // console.log(result);
                     failureCall('服务响应解析失败，请稍后再试');
                 }
             })
@@ -524,7 +524,7 @@
                     element.attr(locked, '1');
                 }
                 // console.log('<div id="' + noticeEle + '" style="position:fixed;height:40px;line-height:40px;padding:0 15px;overflow-y:auto;overflow-x:hidden;z-index:10;color:#fff;width:100%;display:none;"></div>');
-                $('content').prepend('<div id="' + noticeEle + '" style="position:fixed;height:40px;line-height:40px;padding:0 15px;overflow-y:auto;overflow-x:hidden;z-index:10;color:#fff;width:100%;display:none;"></div>');
+                // $('content').prepend('<div id="' + noticeEle + '" style="position:fixed;height:40px;line-height:40px;padding:0 15px;overflow-y:auto;overflow-x:hidden;z-index:10;color:#fff;width:100%;display:none;"></div>');
                 //转换成普通的图片地址
                 //src = src.substring(8, src.indexOf('?last'));
                 loadImgAndSend(src);
