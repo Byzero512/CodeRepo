@@ -1,6 +1,6 @@
 # typora-auto-upload-img
 
-> auto upload img to server when CTRL+V
+> auto upload img to server when paste img with CTRL+V
 
 
 
