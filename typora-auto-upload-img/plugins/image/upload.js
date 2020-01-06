@@ -412,7 +412,7 @@
             $.ajax({
                 type: "PUT",
                 url: "https://api.github.com/repos/"+setting.github.Repository+"/contents/"+setting.github.Filepath+"/"+filename,
-                async: false, 
+                async: true, 
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
