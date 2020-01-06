@@ -1,6 +1,6 @@
 # typora-auto-upload-img
 
-2. > auto upload img to server when CTRL+V
+> auto upload img to server when CTRL+V
 
 
 
