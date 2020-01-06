@@ -91,12 +91,16 @@
         // 上传成功
         onSuccess: function (url) {
             setting.element.removeAttr("style");
+            var src = setting.element.attr('src');
             //替换图片位置
             setting.element.removeAttr(locked).attr('src', url);
             var p = setting.element.parent('span[md-inline="image"]');
             var b = p.find('.md-image-src-span');
             p.attr('data-src', url);
             b.html(url);
+            // 删除本地图片
+            var fs = reqnode('fs');
+            fs.unlinkSync(src.substring(7, src.lastIndexOf('?')));
             console.log("upload succeed");
         },
         // 上传失败
