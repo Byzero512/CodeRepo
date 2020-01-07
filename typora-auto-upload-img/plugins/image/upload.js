@@ -101,14 +101,14 @@
                 find('.md-image-src-span').
                 html(url);
 
-            element.removeAttr("style").removeAttr(locked).removeAttr(is_img_from_paste);
+            element.removeAttr("style").removeAttr(is_img_from_paste).removeAttr(locked);
             var fs = reqnode('fs');
             fs.unlinkSync(src.substring(7, src.lastIndexOf('?')));
         },
         // 上传失败
         onFailure: function(text,element) {
             element.attr("style","background-color:#d51717;");
-            element.removeAttr(locked);
+            element.removeAttr(is_img_from_paste).removeAttr(locked);
         }
     };
 
