@@ -87,37 +87,31 @@
             Filepath : 'typora',                                // 图片在项目中的保存目录，可以不用提前创建目录，github提交时发现没有会自动创建
         },
         
+
         //==============回调函数==============
         // 上传成功
-        onSuccess: function (url) {
-            setting.element.removeAttr("style");
-            var src = setting.element.attr('src');
-            //替换图片位置
-            setting.element.removeAttr(locked).attr('src', url);
-            var p = setting.element.parent('span[md-inline="image"]');
-            var b = p.find('.md-image-src-span');
-            p.attr('data-src', url);
-            b.html(url);
-            // 删除本地图片
+        onSuccess: function(url,element) {
+            console.log("upload success");
+            var src = element.attr('src');
+
+            element.
+                attr('src', url).
+                parent('span[md-inline="image"]').
+                attr('data-src', url).
+                find('.md-image-src-span').
+                html(url);
+
+            element.removeAttr("style").removeAttr(locked).removeAttr(is_img_from_paste);
             var fs = reqnode('fs');
             fs.unlinkSync(src.substring(7, src.lastIndexOf('?')));
-            // console.log("upload succeed");
         },
         // 上传失败
-        onFailure: function (text) {
-            setting.element.attr("style", "background-color:#d51717;");
-            setting.element.removeAttr(locked);
-            // $('#' + noticeEle).
-            // css({
-            //     'background': 'rgba(255,0,0,0.7)'
-            // }).
-            // html(text).
-            // show().
-            // delay(10000).
-            // fadeOut();
+        onFailure: function(text,element) {
+            element.attr("style","background-color:#d51717;");
+            element.removeAttr(locked);
         }
     };
-    
+
     var helper = {
         // 将base64转文件流
         base64ToBlob: function(base64) {
@@ -129,7 +123,7 @@
             var ab = new ArrayBuffer(bytes.length);
             // 生成视图（直接针对内存）：8位无符号整数，长度1个字节
             var ia = new Uint8Array(ab);
-            
+
             for (var i = 0; i < bytes.length; i++) {
                 ia[i] = bytes.charCodeAt(i);
             }
@@ -139,24 +133,24 @@
             });
         },
         // 根据base64获取文件扩展名
-        extension: function(base64){
+        extension: function(base64) {
             var ext = base64.split(',')[0].match(/data:image\/(.*?);base64/)[1] || 'png';
             // console.log("the file ext is: "+ext);
             return ext;
         },
         // 根据base64获取图片内容
-        content: function(base64){
+        content: function(base64) {
             var content = base64.split(',')[1];
             return content;
         },
-        mine: function(base64){
-            var arr  = base64.split(',');
+        mine: function(base64) {
+            var arr = base64.split(',');
             var mime = arr[0].match(/:(.*?);/)[1] || 'image/png';
             // console.log("the file mime is: "+mime);
             return mime;
         },
         // 时间格式化函数
-        dateFormat: function (date, fmt) {
+        dateFormat: function(date, fmt) {
             var o = {
                 "M+": date.getMonth() + 1, //月份
                 "d+": date.getDate(), //日
@@ -168,303 +162,68 @@
             };
             if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
             for (var k in o)
-            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
             return fmt;
         }
     };
-    
+
     var init = {
-        // 上传到自己服务时的初始化方法
-        self: function(){
-            
-        },
-        // 上传到腾讯云COS时的初始化方法
-        tencent: function(){
-            $.getScript( "./plugins/image/cos-js-sdk-v5.min.js" );
-        },
-        // 上传到阿里云OSS时的初始化方法
-        aliyun: function(){
-            $.getScript( "./plugins/image/crypto/crypto/crypto.js", function(){
-                $.getScript( "./plugins/image/crypto/hmac/hmac.js" );
-                $.getScript( "./plugins/image/crypto/sha1/sha1.js" );
-                $.getScript( "./plugins/image/crypto/base64.js" );
-            });
-        },
-        // 上传到又拍云时的初始化方法
-        upyun: function(){
-            $.getScript( "./plugins/image/crypto/crypto/crypto.js", function(){
-                $.getScript( "./plugins/image/crypto/hmac/hmac.js" );
-                $.getScript( "./plugins/image/crypto/sha1/sha1.js" );
-                $.getScript( "./plugins/image/crypto/md5/md5.js" );
-                $.getScript( "./plugins/image/crypto/base64.js" );
-            });
-        },
-        // 上传到七牛云时的初始化方法
-        qiniu: function(){
-            $.getScript( "./plugins/image/crypto/crypto/crypto.js", function(){
-                $.getScript( "./plugins/image/crypto/hmac/hmac.js" );
-                $.getScript( "./plugins/image/crypto/sha1/sha1.js" );
-                $.getScript( "./plugins/image/crypto/base64.js" );
-            });
-        },
         // 上传到github时的初始化方法
-        github: function(){
-            
+        github: function() {
+
         }
     };
-    
+
     // 上传文件的方法
     var upload = {
-        // 自建服务器存储时，适用的上传方法
-        self : function(fileData, successCall, failureCall){
-            var xhr = new XMLHttpRequest();
-            // 文件上传成功或是失败
-            xhr.onreadystatechange = function(e) {
-                if (xhr.readyState == 4) {
-                    if (xhr.status == 200) {
-                        // console.log(xhr.responseText);
-                        try{
-                            var json = JSON.parse(xhr.responseText);
-                            if(json.code){
-                                return failureCall(json.message+'('+json.code+')');
-                            }else{
-                                var url = json.data.url;
-                                successCall(url);
-                            }
-                        }catch(err){
-                            // console.log(err);
-                            return failureCall('服务响应解析失败，错误：'+err.message);
-                        }
-                    } else {
-                        // console.log(xhr.responseText);
-                        var error = '网络错误，请重试。<br />'+xhr.responseText;
-                        return failureCall(error);
-                    }
-                }
-            };
-            // 开始上传
-            xhr.open("POST", setting.self.url, true);
-            for(var key in setting.self.headers){
-                xhr.setRequestHeader(key, setting.self.headers[key]);
-            }
-            xhr.send(fileData);
-        },
-        
-        // 使用腾讯云存储时，适用的上传方法
-        tencent : function(fileData, successCall, failureCall){
-            // 初始化COS
-            var client = new COS({
-                SecretId: setting.tencent.SecretId,
-                SecretKey: setting.tencent.SecretKey,
-                // 可选参数
-                FileParallelLimit: setting.tencent.FileParallelLimit,
-                ChunkParallelLimit: setting.tencent.ChunkParallelLimit,
-                ChunkSize: setting.tencent.ChunkSize,
-                ProgressInterval: setting.tencent.ProgressInterval,
-                ChunkRetryTimes: setting.tencent.ChunkRetryTimes,
-                UploadCheckContentMd5: setting.tencent.UploadCheckContentMd5,
-            });
-            // 转化
-            var filename = setting.tencent.Folder+'/'+helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
-            var fileData = helper.base64ToBlob(fileData);
-            client.sliceUploadFile({
-                Bucket: setting.tencent.Bucket,
-                Region: setting.tencent.Region,
-                Key: filename,
-                Body: fileData,
-                onTaskReady: function (taskId) {
-                    TaskId = taskId;
-                },
-                onProgress: function (info) {
-                    lastPercent = info.percent;
-                }
-            }, function (err, data) {
-                // console.log(err);
-                // console.log(data);
-                // 出现错误，打印错误信息
-                if(err){
-                    return failureCall('服务返回异常，错误：'+err.error);
-                }
-                try{
-                    successCall('https://'+data.Location);
-                }catch(err){
-                    // console.log(err);
-                    // 出现非预期结果，打印错误
-                    return failureCall('服务响应解析失败，错误：'+err.message);
-                }
-            });
-        },
-        
-        // 使用阿里云存储时，适用的上传方法
-        aliyun: function(fileData, successCall, failureCall){
-            var filename = helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
-            var filepath = setting.aliyun.Folder+'/'+filename;
-            var policyBase64 = Base64.encode(JSON.stringify(setting.aliyun.policyText));
-            var bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, setting.aliyun.SecretKey, { asBytes: true }) ;
-            var signature = Crypto.util.bytesToBase64(bytes);
-            
-            var fileData = helper.base64ToBlob(fileData);
-            var formData = new FormData();
-            formData.append('name', filename);
-            formData.append('key', filepath);
-            formData.append('policy', policyBase64);
-            formData.append('OSSAccessKeyId', setting.aliyun.SecretId);
-            formData.append('success_action_status', 200);
-            formData.append('signature', signature);
-            formData.append('file', fileData);
-            $.ajax({
-                type: "POST",
-                url: setting.aliyun.BucketDomain,
-                processData:false,
-                data:formData,
-                contentType: false,
-                success: function(result) {
-                    //奇葩的阿里云，响应内容为空
-                    // console.log(result);
-                    successCall(setting.aliyun.BucketDomain+filepath);
-                },
-                error:function(result){
-                    // console.log(result);
-                    failureCall('服务响应解析失败，请稍后再试');
-                }
-            });
-        },
-        
-        // 使用又拍云存储时，适用的上传方法
-        upyun: function(fileData, successCall, failureCall){
-            var filename = helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
-            var filepath = '/'+setting.upyun.Folder+'/'+filename;
-            var fileData = helper.base64ToBlob(fileData);
-            
-            var authorization = 'Basic '+window.btoa(setting.upyun.Username+':'+setting.upyun.Password);
-            
-            
-            var formData = new FormData();
-            formData.append('bucket', setting.upyun.Bucket);
-            formData.append('save-key', filepath);
-            formData.append('expiration', Math.floor(new Date().getTime() / 1000) + 600);
-            formData.append('file', fileData);
-            $.ajax({
-                type: "POST",
-                url: setting.upyun.Domain+setting.upyun.Bucket,
-                processData:false,
-                data:formData,
-                contentType: false,
-                beforeSend:function(request){
-                    request.setRequestHeader("Authorization", authorization);
-                },
-                success: function(result) {
-                    // console.log(result);
-                    //successCall(setting.aliyun.BucketDomain+filepath);
-                },
-                error:function(result){
-                    // console.log(result);
-                    failureCall('服务响应解析失败，请稍后再试');
-                }
-            });
-        },
-        
-        // 使用七牛云存储时，适用的上传方法
-        qiniu: function(fileData, successCall, failureCall){
-            var filename = helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
-            var filepath = setting.qiniu.Folder+'/'+filename;
-            
-            var policyBase64 = Base64.encode(JSON.stringify(setting.qiniu.policyText));
-            var bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, setting.qiniu.SecretKey, { asBytes: true }) ;
-            var encodedSign = Crypto.util.bytesToBase64(bytes);
-            var uploadToken = setting.qiniu.AccessKey + ':' + encodedSign + ':' + policyBase64;
-            
-            var fileData = helper.base64ToBlob(fileData);
-            var formData = new FormData();
-            formData.append('name', filename);
-            formData.append('key', filepath);
-            formData.append('token', uploadToken);
-            formData.append('file', fileData);
-            $.ajax({
-                type: "POST",
-                url: setting.qiniu.UploadDomain,
-                processData:false,
-                data:formData,
-                contentType: false,
-                success: function(result) {
-                    // console.log(result);
-                    successCall(setting.qiniu.AccessDomain+filepath);
-                },
-                error:function(result){
-                    // console.log(result);
-                    failureCall('服务响应解析失败，请稍后再试');
-                }
-            });
-        },
-        
         // 使用github存储时，适用的上传方法
-        github: function(fileData, successCall, failureCall){
+        github: function(fileData, successCall, failureCall) {
             // console.log(setting.github);
-            var filename = helper.dateFormat((new Date()),'yyyyMMddHHmmss-')+Math.floor(Math.random() * Math.floor(999999))+'.'+helper.extension(fileData);
+            var filename = helper.dateFormat((new Date()), 'yyyyMMddHHmmss-') + Math.floor(Math.random() * Math.floor(999999)) + '.' + helper.extension(fileData[0]);
             var data = {
-                "message": "From:Thobian/typora-plugins-win-img",
+                "message": "Upload picture with typora",
                 "committer": {
                     "name": setting.github.CommitterName,
                     "email": setting.github.CommitterEmail
                 },
-                "content": helper.content(fileData)
+                "content": helper.content(fileData[0])
             };
             $.ajax({
                 type: "PUT",
-                url: "https://api.github.com/repos/"+setting.github.Repository+"/contents/"+setting.github.Filepath+"/"+filename,
-                async: true, 
+                // url: "https://api.github.com/repos/"+setting.github.Repository+"/contents/"+setting.github.Filepath+"/"+filename,
+                url: "https://api.github.com/repos/" + setting.github.Repository + "/contents/" + filename,
+                async: true,
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
-                beforeSend: function(request){
-                    request.setRequestHeader("Authorization", "token "+setting.github.Token);
+                beforeSend: function(request) {
+                    request.setRequestHeader("Authorization", "token " + setting.github.Token);
                 },
                 success: function(data) {
-                    // console.log(data);
-                    try{
-                        successCall(data.content.download_url);
-                    }catch(err){
-                        // console.log(err);
-                        return failureCall('服务响应解析失败，请稍后再试');
-                    }
+                    successCall(data.content.download_url, fileData[1]);
                 },
-                error:function(result){
-                    // console.log(result);
-                    failureCall('服务响应解析失败，请稍后再试');
+                error: function(result) {
+                    failureCall('Error: Failed to upload!', fileData[1]);
                 }
-            })
+            });
         }
     };
-    
-    
+
+
     //读取文件为base64，再回调上传函数将文件发到服务器
-    var loadImgAndSend = function(url){
+    var loadImgAndSend = function(url,element) {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             var reader = new FileReader();
+
             reader.onloadend = function() {
                 switch (setting.target) {
-                    case 'self':
-                        upload.self(reader.result, setting.onSuccess, setting.onFailure);
-                        break;
-                    case 'tencent':
-                        upload.tencent(reader.result, setting.onSuccess, setting.onFailure);
-                        break;
-                    case 'aliyun':
-                        upload.aliyun(reader.result, setting.onSuccess, setting.onFailure);
-                        break;
-                    case 'upyun':
-                        upload.upyun(reader.result, setting.onSuccess, setting.onFailure);
-                        break;
-                    case 'qiniu':
-                        upload.qiniu(reader.result, setting.onSuccess, setting.onFailure);
-                        break;
                     case 'github':
-                        upload.github(reader.result, setting.onSuccess, setting.onFailure);
+                        upload.github([reader.result,element], setting.onSuccess, setting.onFailure);
                         break;
                     default:
-                        setting.onFailure('配置错误，不支持的图片上传方式，可选方式：self/tencent/aliyun/qiniu/github');
-                } 
+                        setting.onFailure('Error: upload target configure error: ');
+                }
             }
             reader.readAsDataURL(xhr.response);
         };
@@ -475,73 +234,62 @@
 
     // 核心方法
     var locked = 'doing';
-    var noticeEle = 'image-result-notice';    
+    var is_img_from_paste = "is_img_from_paste";
+    var noticeEle = 'image-result-notice';
     $.image = {};
-    $.image.init = function(options){
-        options = options||{};
-        setting.target = options.target||setting.target;
-        setting.self = options.self||setting.self;
-        setting.tencent = options.tencent||setting.tencent;
-        setting.aliyun = options.aliyun||setting.aliyun;
-        setting.qiniu = options.qiniu||setting.qiniu;
-        setting.github = options.github||setting.github;
-        
+    $.image.init = function(options) {
+        options = options || {};
+        setting.target = options.target || setting.target;
+        setting.self = options.self || setting.self;
+        setting.tencent = options.tencent || setting.tencent;
+        setting.aliyun = options.aliyun || setting.aliyun;
+        setting.qiniu = options.qiniu || setting.qiniu;
+        setting.github = options.github || setting.github;
+
         // 根据不同的文件存储位置，初始化不同的环境
         switch (setting.target) {
-            case 'self':
-                init.self();
-                break;
-            case 'tencent':
-                init.tencent();
-                break;
-            case 'aliyun':
-                init.aliyun();
-            case 'upyun':
-                init.upyun();
-                break;
-            case 'qiniu':
-                init.qiniu();
-                break;
             case 'github':
                 init.github();
                 break;
         }
-        
-        $('#write').on('click', 'img', function (e) {
-            try {
+
+        // 监听鼠标事件
+        // $('#write').on('mouseleave click', 'img', function(e){
+        $('#write').on('click', 'img', function(e){
+            try{
+                console.log("click");
                 var src = e.target.src;
                 // haved upload to github
-                if (/^(https?:)?\/\//i.test(src)) {
+                if( /^(https?:)?\/\//i.test(src) ){
                     // console.log('The image already upload to server, url:' + src);
                     return false;
                 }
-                setting.element = element = $(e.target);
-                var doing = element.attr(locked) == '1';
-                if (doing) {
-                    // console.log('uploading...');
-                    return false;
-                } else {
-                    element.attr(locked, '1');
+                element = $(e.target);
+                if (element.attr(is_img_from_paste)=="1"){
+                    var doing = element.attr(locked)=='1';
+                    if( doing ){
+                        // console.log('uploading...');
+                        return false;
+                    }else{
+                        element.attr(locked, '1');
+                    }
+                    loadImgAndSend(src,element);
                 }
-                // console.log('<div id="' + noticeEle + '" style="position:fixed;height:40px;line-height:40px;padding:0 15px;overflow-y:auto;overflow-x:hidden;z-index:10;color:#fff;width:100%;display:none;"></div>');
-                // $('content').prepend('<div id="' + noticeEle + '" style="position:fixed;height:40px;line-height:40px;padding:0 15px;overflow-y:auto;overflow-x:hidden;z-index:10;color:#fff;width:100%;display:none;"></div>');
-                //转换成普通的图片地址
-                //src = src.substring(8, src.indexOf('?last'));
-                loadImgAndSend(src);
             }
-            catch (e) { console.log(e); };
+            catch(e){console.log(e);};
         });
         $('#write').on('paste', function (e) {
             try {
-                setTimeout(function () {
-                    element = $(e.target);
-                    if (element.has("img").length > 0) {
-                        setting.element = element.find('img');
-                        setting.element.attr(locked, '1');
-                        src = setting.element.attr("src");
-                        loadImgAndSend(src);
+                setTimeout(function(){
+                    target = $(e.target);
+                    if (target.has("img").length>0){
+                        element = target.find('img');
+                        element.attr(locked, '1');
+                        element.attr(is_img_from_paste, '1');
+                        src = element.attr("src");
+                        loadImgAndSend(src,element);
                     }
-                }, 512);
+                },512);
             }
             catch (e) { console.log(e); };
         });
